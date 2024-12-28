@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surah Al-Quran</title>
+
+    <!-- Google Site Verification Meta Tag -->
+    <meta name="google-site-verification" content="isqdQ25gPtBLOllVIKudmbcy70q7eiLALuQ7z19WBB8" />
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            color: #007bff;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #2e3b45;
+            font-size: 28px;
+            margin-top: 20px;
+        }
+        select, button {
+            padding: 12px;
+            font-size: 16px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            width: 60%;
+            max-width: 400px;
+        }
+        select:focus, button:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        #surahContainer {
+            margin-top: 20px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .ayah {
+            margin: 12px 0;
+            font-size: 18px;
+            line-height: 1.8;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        .translation {
+            font-size: 16px;
+            color: #555;
+        }
+        .ayah-number {
+            font-weight: bold;
+            font-size: 20px;
+            color: #007bff;
+        }
+        .ayah-container {
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        /* Font untuk Teks Arab */
+        @import url('https://fonts.googleapis.com/css2?family=Scheherazade&display=swap');
+        .arabic-text {
+            font-family: 'Scheherazade', serif;
+            direction: rtl;
+            font-size: 22px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Surah Al-Quran</h1>
+
+    <!-- Dropdown Pilih Surah -->
+    <select id="surahSelect">
+        <option value="">Pilih Surah</option>
+    </select>
+    <button onclick="loadSurah()">Tunjukkan Surah</button>
+    
+    <div id="surahContainer"></div>
+
+    <script>
+        const baseUrl = "https://api.alquran.cloud/v1";  // API for Surah data
+
+        // Fungsi untuk memuatkan semua surah
+        async function loadSurahs() {
+            try {
+                const response = await fetch(`${baseUrl}/surah`);
+                const data = await response.json();
+                const surahData = data.data; // Simpan data surah untuk dropdown
+                const surahSelect = document.getElementById('surahSelect');
+                surahSelect.innerHTML = '<option value="">Pilih Surah</option>';  // Reset dropdown
+                
+                // Muatkan senarai surah ke dalam dropdown
+                surahData.forEach(surah => {
+                    const option = document.createElement('option');
+                    option.value = surah.number;
+                    option.textContent = `${surah.number}. ${surah.name}`;
+                    surahSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error loading surahs:", error);
+            }
+        }
+
+        // Fungsi untuk memuatkan surah berdasarkan pilihan
+        async function loadSurah() {
+            const surahId = document.getElementById('surahSelect').value;
+            if (!surahId) {
+                alert("Sila pilih surah.");
+                return;
+            }
+
+            const surahContainer = document.getElementById('surahContainer');
+            surahContainer.innerHTML = '<p>Loading...</p>';
+
+            try {
+                const response = await fetch(`${baseUrl}/surah/${surahId}`);
+                const data = await response.json();
+                const surah = data.data;
+                
+                surahContainer.innerHTML = `<h2>${surah.name}</h2>`;
+                
+                // Muatkan ayat-ayat dengan terjemahan Bahasa Inggeris
+                const ayahs = surah.ayahs;
+                ayahs.forEach(async (ayah) => {
+                    const translationResponse = await fetch(`https://api.alquran.cloud/v1/ayah/${ayah.numberInSurah}/en.asad`);
+                    const translationData = await translationResponse.json();
+                    const translation = translationData.data.text;
+                    
+                    const ayahDiv = document.createElement('div');
+                    ayahDiv.classList.add('ayah-container');
+                    ayahDiv.innerHTML = `
+                        <div class="ayah">
+                            <div class="ayah-number">Ayat ${ayah.numberInSurah}</div>
+                            <div class="arabic-text">${ayah.text}</div>
+                            <div class="translation">${translation}</div>
+                        </div>
+                    `;
+                    surahContainer.appendChild(ayahDiv);
+                });
+
+            } catch (error) {
+                console.error("Error loading surah:", error);
+                surahContainer.innerHTML = '<p>Gagal memuatkan surah. Sila cuba lagi.</p>';
+            }
+        }
+
+        // Muatkan senarai surah apabila halaman dimuatkan
+        loadSurahs();
+    </script>
+</body>
+</html>
